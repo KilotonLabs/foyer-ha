@@ -1,0 +1,23 @@
+{
+  "domain": "foyer",
+  "name": "Foyer",
+  "codeowners": [
+    "@KilotonLabs"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "http",
+    "media_source"
+  ],
+  "documentation": "https://www.kilotonlabs.com/foyer/",
+  "integration_type": "service",
+  "iot_class": "local_push",
+  "issue_tracker": "https://github.com/KilotonLabs/foyer-ha/issues",
+  "requirements": [],
+  "ssdp": [
+    {
+      "st": "roku:ecp"
+    }
+  ],
+  "version": "1.0.0"
+}

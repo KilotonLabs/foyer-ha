@@ -1,0 +1,11 @@
+{
+  "name": "foyer-ha",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node tools/python.mjs -m unittest discover -s tests -v && node tools/test_ha.mjs && node --check renderer/server.mjs",
+    "test:ha": "node tools/test_ha.mjs",
+    "build": "node tools/python.mjs tools/package_integration.py",
+    "verify": "npm test && npm run build && node tools/python.mjs tools/verify_artifacts.py"
+  }
+}

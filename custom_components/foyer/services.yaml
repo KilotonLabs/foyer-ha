@@ -1,0 +1,88 @@
+show_view:
+  target:
+    entity:
+      integration: foyer
+      domain: media_player
+  fields:
+    dashboard_path:
+      required: true
+      default: lovelace
+      example: dashboard-tv
+      selector:
+        text:
+    view_path:
+      example: living-room
+      selector:
+        text:
+    refresh_seconds:
+      default: 3
+      selector:
+        number:
+          min: 2
+          max: 60
+          unit_of_measurement: s
+show_camera:
+  target:
+    entity:
+      integration: foyer
+      domain: media_player
+  fields:
+    camera:
+      required: true
+      example: camera.front_door
+      selector:
+        entity:
+          domain: camera
+    title:
+      example: Someone is at the front door
+      selector:
+        text:
+    message:
+      example: Doorbell rang
+      selector:
+        text:
+    timeout:
+      default: 30
+      selector:
+        number:
+          min: 0
+          max: 600
+          unit_of_measurement: s
+    actions:
+      selector:
+        entity:
+          multiple: true
+    return_to_app:
+      default: true
+      selector:
+        boolean:
+notify:
+  target:
+    entity:
+      integration: foyer
+      domain: media_player
+  fields:
+    title:
+      required: true
+      example: Washer finished
+      selector:
+        text:
+    message:
+      example: Load is ready
+      selector:
+        text:
+    camera:
+      selector:
+        entity:
+          domain: camera
+    timeout:
+      default: 10
+      selector:
+        number:
+          min: 0
+          max: 600
+          unit_of_measurement: s
+    launch:
+      default: false
+      selector:
+        boolean:
