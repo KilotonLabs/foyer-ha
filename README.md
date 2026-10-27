@@ -4,7 +4,7 @@ The Home Assistant side of Foyer: a custom integration that turns each paired Ro
 
 Documentation, support, privacy policy and terms: https://www.kilotonlabs.com/foyer/
 
-**Status: 0.5.0 (protocol 2).** Tested on a Roku TV (Roku OS 15) against Home Assistant 2026.9, with the household's own ffmpeg build. Not yet verified: the renderer add-on image, cloud TTS engines, HD-resolution TVs, other Home Assistant versions. See [TESTING.md](TESTING.md).
+**Status: 1.0.0.** Tested on a Roku TV (Roku OS 15) with Home Assistant 2026.9. Untested: cloud TTS engines, HD-resolution TVs and other Home Assistant versions. See [TESTING.md](TESTING.md).
 
 ## What it does
 
@@ -36,18 +36,17 @@ Then pair a TV:
 
 Settings per TV: home name, areas (every supported entity in them, minus hidden, disabled and diagnostic ones), extra entities, entities to hide, cameras, favorites, scenes and scripts, flagged helpers, weather, and two switches: allow control (default on) and allow unlocking and garage doors or gates (default off). Profiles from 0.4 are migrated: their checks become extra entities and favorites, their scripts become scene buttons, and control is allowed with guarded actions off.
 
-Each entry is one TV. A successful replacement pairing revokes the prior token. Revoking a TV in Configure also forgets its address, so nothing can open the app on it until it pairs again. To wake a closed app, the TV's **Settings > System > Advanced system settings > Control by mobile apps > Network access** must allow it; the media player's `tv_wake` attribute shows `blocked` otherwise.
+Each entry is one TV. A successful replacement pairing revokes the prior token. Revoking a TV in Configure also forgets its address, so nothing can open the app on it until it pairs again. To wake a closed app, the Roku needs **Settings > System > Advanced system settings > Control by mobile apps** set to **Enabled** (on older Roku OS: **Network access** set to **Default**); the media player's `tv_wake` attribute shows `blocked` otherwise.
 
 ## Dashboard renderer
 
 `renderer/` keeps up to four views open in headless Chromium, hides HA's toolbar and sidebar, and returns 1920x1080 JPEG frames. Only Home Assistant talks to it; TVs fetch frames through the integration's token-checked API. It stores nothing and serves no pages.
 
-- **HAOS / Supervised:** `renderer/` is an add-on (`config.yaml`, `Dockerfile`, `build.yaml`). Set `ha_token` and `secret` (16+ characters), start it, copy the printed renderer URL into Foyer's settings. Clearing the URL there turns dashboard casts off; leaving the secret field empty keeps the saved secret as long as the URL is unchanged. **The add-on image has not been built or tested yet.**
-- **Any machine with Node.js 20+ and Chrome/Chromium:** `cd renderer && npm ci && HA_URL=http://homeassistant.local:8123 HA_TOKEN=... RENDERER_SECRET=... node server.mjs`.
+- **Any machine with Node.js 20+ and Chrome/Chromium:** `cd renderer && npm ci && HA_URL=http://homeassistant.local:8123 HA_TOKEN=... RENDERER_SECRET=... node server.mjs`. Copy the renderer URL it prints into Foyer's settings. Clearing the URL there turns dashboard casts off; leaving the secret field empty keeps the saved secret as long as the URL is unchanged.
 
 Use a long-lived token from a dedicated **non-admin** user; the renderer sees whatever that user sees.
 
-A TV is read from across the room, so the page is laid out at `1 / scale` of the frame size and rendered `scale` times larger (default 1.5, range 1 to 3; `SCALE` env var or the add-on's `scale` option). Raise it for bigger text, set 1 for the old pixel-for-pixel layout.
+A TV is read from across the room, so the page is laid out at `1 / scale` of the frame size and rendered `scale` times larger (default 1.5, range 1 to 3; `SCALE` env var). Raise it for bigger text, set 1 for the old pixel-for-pixel layout.
 
 ```yaml
 action: foyer.show_view
