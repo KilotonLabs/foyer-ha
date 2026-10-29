@@ -11,7 +11,7 @@ dist = root / "dist"
 checksums = json.loads((dist / "checksums.json").read_text())
 name = "foyer-integration.zip"
 allowed = {"custom_components/foyer/" + item for item in
-           ["__init__.py", "api.py", "core.py", "config_flow.py", "media.py", "media_player.py", "playback.py", "services.py", "services.yaml",
+           ["__init__.py", "api.py", "core.py", "config_flow.py", "diagnostics.py", "media.py", "media_player.py", "playback.py", "services.py", "services.yaml",
             "manifest.json", "strings.json", "translations/en.json", "LICENSE"]}
 path = dist / name
 assert hashlib.sha256(path.read_bytes()).hexdigest() == checksums[name], name

@@ -1,0 +1,52 @@
+name: Something doesn't work
+description: A problem with Foyer on the TV or in Home Assistant.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what the TV or Home Assistant did instead.
+    validations:
+      required: true
+  - type: input
+    id: integration
+    attributes:
+      label: Integration version
+      description: HACS > Foyer, or Settings > Devices & services > Foyer.
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: input
+    id: app
+    attributes:
+      label: Roku app version
+      description: On the TV, Foyer > Settings > About and privacy.
+      placeholder: "1.0.1"
+  - type: input
+    id: ha
+    attributes:
+      label: Home Assistant version
+      description: Settings > About.
+      placeholder: "2026.10.1"
+    validations:
+      required: true
+  - type: input
+    id: roku
+    attributes:
+      label: Roku model and Roku OS version
+      description: On the Roku, Settings > System > About.
+      placeholder: "onn 4K, Roku OS 15.1"
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: >-
+        Settings > Devices & services > Foyer, open the menu next to the TV, Download diagnostics, and drag the file here.
+        The file leaves out pairing keys, the renderer secret and network addresses.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Home Assistant log lines
+      description: Settings > System > Logs, search for "foyer", and paste what you find.
+      render: text

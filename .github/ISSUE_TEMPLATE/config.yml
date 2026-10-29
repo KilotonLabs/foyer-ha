@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Setup guide
+    url: https://www.kilotonlabs.com/foyer/
+    about: Pairing, the Roku setting for doorbell alerts, and the renderer.

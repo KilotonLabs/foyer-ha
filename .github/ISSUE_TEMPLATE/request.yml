@@ -1,0 +1,11 @@
+name: Feature request
+description: Something Foyer should do that it doesn't.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: request
+    attributes:
+      label: What you'd like
+      description: What you want to see or do on the TV, and the devices or setup involved.
+    validations:
+      required: true

@@ -1,6 +1,6 @@
 {
   "name": "foyer-ha",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "scripts": {
     "test": "node tools/python.mjs -m unittest discover -s tests -v && node tools/test_ha.mjs && node --check renderer/server.mjs",

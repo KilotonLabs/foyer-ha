@@ -4,7 +4,7 @@ The Home Assistant side of Foyer: a custom integration that turns each paired Ro
 
 Documentation, support, privacy policy and terms: https://www.kilotonlabs.com/foyer/
 
-**Status: 1.0.0.** Tested on a Roku TV (Roku OS 15) with Home Assistant 2026.9. Untested: cloud TTS engines, HD-resolution TVs and other Home Assistant versions. See [TESTING.md](TESTING.md).
+**Status: 1.0.1.** Tested on a Roku TV (Roku OS 15) with Home Assistant 2026.9. Untested: cloud TTS engines, HD-resolution TVs and other Home Assistant versions. See [TESTING.md](TESTING.md).
 
 ## What it does
 
@@ -84,6 +84,10 @@ actions:
 The status API returns, for the selected areas and entities only, names, compact state values, icons, change times, the control options described above, camera names and any cast queued for that TV. It never forwards arbitrary attributes. Camera stills and streams are served only for the TV's selected cameras. Cast media URLs are short-lived signed HA URLs. The integration stores hashes of pairing codes and TV tokens, plus each TV's IP address and Roku app ID so it can wake the app. To hand the screen back after a camera takeover it asks the TV which app is in front and remembers it in memory. No analytics or telemetry.
 
 Limits: 10 pairing attempts/minute per network address and 60 in total; 30 rejected TV tokens/minute per address and 240 in total; 60 status/stream requests/minute per TV; 40 controls per 10 s per TV, guarded actions at most one per 3 s; 1200 camera stills/minute per TV; 40 dashboard frames/minute per TV; queued casts expire after 60 s; request IDs remembered for ten minutes in memory.
+
+## Reporting a problem
+
+Open an issue on GitHub, or email support@kilotonlabs.com. With an issue, attach the diagnostics file: Settings > Devices & services > Foyer, open the menu next to the TV, then Download diagnostics. It holds the Foyer and Home Assistant versions, the TV's settings switches and counts, and its connection state. It leaves out pairing keys, the renderer secret, network addresses, titles and entity names.
 
 ## Development
 
