@@ -1,5 +1,6 @@
 """Config and options flows through Home Assistant's real flow manager."""
 from homeassistant.data_entry_flow import FlowResultType
+from homeassistant.helpers.service_info.hassio import HassioServiceInfo
 
 BASE = {"title": "Den", "entities": ["light.lamp"], "scenes": [], "attention_when_on": []}
 
@@ -69,3 +70,42 @@ async def test_options_menu_settings_and_revoke(hass):
     result = await hass.config_entries.options.async_configure(result["flow_id"], {"next_step_id": "revoke"})
     result = await hass.config_entries.options.async_configure(result["flow_id"], {})
     assert entry.data["token_hash"] == "" and entry.data["pair_hash"] == ""
+
+
+ADDON_SECRET = "addon-secret-0123456789abcdef"
+
+
+def addon(**config):
+    return HassioServiceInfo(config={"host": "a0d7b954-foyer-renderer", "port": 8099, "secret": ADDON_SECRET, **config},
+                             name="Foyer Renderer", slug="a0d7b954_foyer_renderer", uuid="0123456789abcdef0123456789abcdef")
+
+
+async def paired_tv(hass, title, **settings):
+    result = await hass.config_entries.flow.async_init("foyer", context={"source": "user"})
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {**BASE, "title": title, **settings})
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    return result["result"]
+
+
+async def test_renderer_addon_discovery_links_every_tv_once(hass):
+    result = await hass.config_entries.flow.async_init("foyer", context={"source": "hassio"}, data=addon())
+    assert (result["type"], result["reason"]) == (FlowResultType.ABORT, "no_tvs")
+    den = await paired_tv(hass, "Den")
+    loft = await paired_tv(hass, "Loft", renderer_url="http://192.168.1.20:8099", renderer_secret="renderer-secret-0123")
+    for bad in ({"secret": "short"}, {"host": "evil/path"}, {"port": "8099"}, {"port": 0}, {"host": None}):
+        result = await hass.config_entries.flow.async_init("foyer", context={"source": "hassio"}, data=addon(**bad))
+        assert (result["type"], result["reason"]) == (FlowResultType.ABORT, "invalid_discovery"), bad
+    assert den.options == {} and loft.data["settings"]["renderer_url"] == "http://192.168.1.20:8099"
+    result = await hass.config_entries.flow.async_init("foyer", context={"source": "hassio"}, data=addon())
+    assert (result["type"], result["step_id"]) == (FlowResultType.FORM, "hassio_confirm")
+    assert result["description_placeholders"] == {"addon": "Foyer Renderer", "count": "2"}
+    assert ADDON_SECRET not in str(result)
+    result = await hass.config_entries.flow.async_configure(result["flow_id"], {})
+    assert (result["type"], result["reason"]) == (FlowResultType.ABORT, "renderer_linked")
+    for entry, title in ((den, "Den"), (loft, "Loft")):
+        assert entry.options["renderer_url"] == "http://a0d7b954-foyer-renderer:8099"
+        assert entry.options["renderer_secret"] == ADDON_SECRET
+        assert entry.options["title"] == title and entry.options["entities"] == ["light.lamp"]
+    assert len(hass.config_entries.async_entries("foyer")) == 2  # Discovery never adds an entry of its own.
+    result = await hass.config_entries.flow.async_init("foyer", context={"source": "hassio"}, data=addon())
+    assert (result["type"], result["reason"]) == (FlowResultType.ABORT, "renderer_already_linked")

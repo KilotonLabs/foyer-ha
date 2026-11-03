@@ -42,6 +42,10 @@
       "link": {
         "title": "Open Foyer on {name}",
         "description": "Submit to open Foyer on the TV and pair it."
+      },
+      "hassio_confirm": {
+        "title": "Use {addon} for dashboard casts?",
+        "description": "The {addon} app is running on this Home Assistant. Foyer can use it to show dashboards on {count} paired TV(s), with no address or secret to type."
       }
     },
     "progress": {
@@ -72,7 +76,11 @@
       "already_in_progress": "This TV is already being set up.",
       "app_not_installed": "Install the Foyer app on this Roku TV first.",
       "cannot_connect": "Could not reach the Roku TV on the local network.",
-      "pair_timeout": "The TV did not pair within 10 minutes. Set it up again from the discovered device."
+      "pair_timeout": "The TV did not pair within 10 minutes. Set it up again from the discovered device.",
+      "invalid_discovery": "The Foyer Renderer app sent an address or secret Foyer can't use. Restart the app and check its log.",
+      "no_tvs": "Pair a TV with Foyer first. The Foyer Renderer app is offered again when Home Assistant restarts.",
+      "renderer_already_linked": "Every paired TV already uses this Foyer Renderer app.",
+      "renderer_linked": "Dashboard casts now use the Foyer Renderer app."
     }
   },
   "options": {

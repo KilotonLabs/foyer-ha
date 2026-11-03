@@ -40,8 +40,9 @@ Each entry is one TV. A successful replacement pairing revokes the prior token. 
 
 ## Dashboard renderer
 
-`renderer/` keeps up to four views open in headless Chromium, hides HA's toolbar and sidebar, and returns 1920x1080 JPEG frames. Only Home Assistant talks to it; TVs fetch frames through the integration's token-checked API. It stores nothing and serves no pages.
+`renderer/` keeps up to four views open in headless Chromium, hides HA's toolbar and sidebar, and returns 1920x1080 JPEG frames. Only Home Assistant talks to it; TVs fetch frames through the integration's token-checked API. It serves no pages, and the only thing it stores is the secret it makes for itself when it runs as an app.
 
+- **Home Assistant OS or Supervised, as an app:** in **Settings > Apps > App store**, open the menu, choose **Repositories** and add `https://github.com/KilotonLabs/foyer-ha`. Install **Foyer Renderer**, enter a token in `ha_token` and start it. Leave `secret` empty and the app makes one. Home Assistant then shows **Use Foyer Renderer for dashboard casts?** under **Settings > Devices & services**; confirming it sets the renderer on every paired TV. Pair a TV first: the question comes back after a restart if no TV was paired. The first install builds the image on your machine. In a test on amd64 the app used about 255 MB with one view open and 480 MB with four.
 - **Any machine with Node.js 20+ and Chrome/Chromium:** `cd renderer && npm ci && HA_URL=http://homeassistant.local:8123 HA_TOKEN=... RENDERER_SECRET=... node server.mjs`. Copy the renderer URL it prints into Foyer's settings. Clearing the URL there turns dashboard casts off; leaving the secret field empty keeps the saved secret as long as the URL is unchanged.
 
 Use a long-lived token from a dedicated **non-admin** user; the renderer sees whatever that user sees.

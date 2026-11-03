@@ -13,7 +13,7 @@ from homeassistant.core import callback
 from homeassistant.helpers import selector
 
 from .core import (
-    DOMAIN, LIMITS, PAIR_TTL, SUPPORTED, activate_pairing, find_app, new_match, new_pairing, parse_apps, parse_device_info,
+    DOMAIN, LIMITS, PAIR_TTL, RENDERER_RE, SUPPORTED, activate_pairing, find_app, new_match, new_pairing, parse_apps, parse_device_info,
     validate_settings,
 )
 
@@ -123,6 +123,40 @@ class FoyerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return await self.async_step_user()
         return self.async_show_form(step_id="discovery_confirm", data_schema=vol.Schema({}),
                                     description_placeholders={"name": self._discovered["name"]})
+
+    async def async_step_hassio(self, discovery_info):
+        """The Foyer Renderer add-on announced itself through the Supervisor: offer it to every paired TV, once."""
+        config = discovery_info.config
+        host, port, secret = config.get("host"), config.get("port"), config.get("secret")
+        url = f"http://{host}:{port}" if isinstance(host, str) and isinstance(port, int) and 0 < port < 65536 else ""
+        if not (RENDERER_RE.fullmatch(url) and isinstance(secret, str) and 16 <= len(secret) <= 128):
+            return self.async_abort(reason="invalid_discovery")  # The same rules as a renderer typed into the form.
+        await self.async_set_unique_id("renderer_addon")  # One offer at a time, never an entry of its own.
+        entries = self._async_current_entries(include_ignore=False)
+        if not entries:
+            return self.async_abort(reason="no_tvs")
+        current = lambda entry: entry.options or entry.data["settings"]
+        self._renderer = {"renderer_url": url, "renderer_secret": secret}
+        self._renderer_entries = [entry.entry_id for entry in entries
+                                  if (current(entry).get("renderer_url"), current(entry).get("renderer_secret")) != (url, secret)]
+        if not self._renderer_entries:
+            return self.async_abort(reason="renderer_already_linked")
+        self.context["title_placeholders"] = {"name": discovery_info.name}
+        self._renderer_name = discovery_info.name
+        return await self.async_step_hassio_confirm()
+
+    async def async_step_hassio_confirm(self, user_input=None):
+        if user_input is not None:
+            for entry_id in self._renderer_entries:
+                entry = self.hass.config_entries.async_get_entry(entry_id)
+                if entry is None:
+                    continue
+                settings = {**(entry.options or entry.data["settings"]), **self._renderer}
+                validate_settings(settings)
+                self.hass.config_entries.async_update_entry(entry, options=settings)
+            return self.async_abort(reason="renderer_linked")
+        return self.async_show_form(step_id="hassio_confirm", data_schema=vol.Schema({}), description_placeholders={
+            "addon": self._renderer_name, "count": str(len(self._renderer_entries))})
 
     async def _launch(self):
         """Open the app on the TV with a one-time code; the TV pairs by itself once its owner confirms the number."""

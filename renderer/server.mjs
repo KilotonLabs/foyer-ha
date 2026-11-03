@@ -2,16 +2,26 @@
 // returns pictures of them. Roku has no web engine, so custom cards can only reach the TV this way.
 // The Foyer integration is the only intended client; TVs never talk to this service directly.
 import { createServer } from "node:http";
-import { existsSync, readFileSync } from "node:fs";
-import { timingSafeEqual } from "node:crypto";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 import { hostname } from "node:os";
 import puppeteer from "puppeteer-core";
 
-const options = existsSync("/data/options.json") ? JSON.parse(readFileSync("/data/options.json", "utf8")) : {};
+const addon = existsSync("/data/options.json"); // Running as the Home Assistant add-on.
+const options = addon ? JSON.parse(readFileSync("/data/options.json", "utf8")) : {};
+// As an add-on with no secret set, make one and keep it in /data; the Supervisor hands it to the integration.
+const SECRET_FILE = "/data/foyer-secret";
+function addonSecret() {
+  if (!addon || options.secret || process.env.RENDERER_SECRET) return "";
+  if (existsSync(SECRET_FILE)) return readFileSync(SECRET_FILE, "utf8").trim();
+  const made = randomBytes(24).toString("base64url");
+  writeFileSync(SECRET_FILE, made, { mode: 0o600 });
+  return made;
+}
 const config = {
   haUrl: (process.env.HA_URL || options.ha_url || "http://homeassistant:8123").replace(/\/+$/, ""),
   token: process.env.HA_TOKEN || options.ha_token || "",
-  secret: process.env.RENDERER_SECRET || options.secret || "",
+  secret: process.env.RENDERER_SECRET || options.secret || addonSecret(),
   port: Number(process.env.PORT || 8099),
   host: process.env.HOST || "0.0.0.0",
   dark: (process.env.DARK ?? String(options.dark ?? true)) !== "false",
@@ -191,9 +201,21 @@ setInterval(() => {
 
 server.listen(config.port, config.host, () => {
   console.log(`Foyer renderer on port ${config.port}, rendering ${config.haUrl} with ${config.browserPath}.`);
-  const where = existsSync("/data/options.json") ? hostname() : "<this machine's address>"; // Add-ons share HA's network.
-  console.log(`In Foyer settings, set the renderer URL to http://${where}:${config.port} and the same secret.`);
+  const where = addon ? hostname() : "<this machine's address>"; // Add-ons share HA's network.
+  if (process.env.SUPERVISOR_TOKEN) announce(where).catch((error) => console.error(`Could not announce to Home Assistant: ${firstLine(error)}`));
+  else console.log(`In Foyer settings, set the renderer URL to http://${where}:${config.port} and the same secret.`);
 });
+
+// Supervisor discovery: Home Assistant offers this renderer to every paired Foyer TV (one confirmation, nothing typed).
+async function announce(host) {
+  const response = await fetch("http://supervisor/discovery", {
+    method: "POST", signal: AbortSignal.timeout(15_000),
+    headers: { Authorization: `Bearer ${process.env.SUPERVISOR_TOKEN}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ service: "foyer", config: { host, port: config.port, secret: config.secret } }),
+  });
+  if (!response.ok) throw new Error(`Supervisor answered ${response.status}`);
+  console.log("Announced to Home Assistant: confirm \"Use Foyer Renderer for dashboard casts?\" under Settings > Devices & services.");
+}
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, async () => {
     await launching?.then((browser) => browser.close()).catch(() => {});
