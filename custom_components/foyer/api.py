@@ -15,7 +15,7 @@ from homeassistant.components.http import HomeAssistantView
 from .core import (
     MOTION_CLASSES, LIBRARY_LIMIT, library_id, library_item, restream_sources, short_title,
     COMMAND_ID_RE, HA_MASTER_RE, POLL_SECONDS, PROTOCOL, ActionGate, AddressRateLimit, PendingPairings, RateLimit,
-    HOME_SCREEN, TvLink, build_home, clamp_width, control_call, digest, forecast_range, matches, parse_active_app, rev_of,
+    HOME_SCREEN, TvLink, build_home, clamp_width, control_call, digest, forecast_range, is_app_name, matches, parse_active_app, parse_apps, rev_of,
 )
 
 from .media import ConvertError, Media, NeedsConversion, NoRoom
@@ -161,8 +161,22 @@ class Runtime:
             return
         # The app closed (or never answered): launch it, which also delivers the cast.
         if link.app_id and self.paired(entry_id):
-            link.wake = await self._ecp(host, f"/launch/{link.app_id}?contentId=cast&mediaType=special")
+            if await self._installed_name(host, link.app_id) in (None, True):
+                link.wake = await self._ecp(host, f"/launch/{link.app_id}?contentId=cast&mediaType=special")
+            else:
+                # The paired slot now holds another app (a side-loaded Foyer replaced in the dev slot): opening it
+                # would start someone else's app with nothing to show.
+                link.wake = "not_installed"
+                _LOGGER.warning("Foyer is no longer installed as app %s on the TV; pair the TV again", link.app_id)
         self.notify(entry_id)
+
+    async def _installed_name(self, host, app_id):
+        """True when Foyer is the app installed as app_id, False when another app or none is, None when unknown."""
+        status, data = await ecp(self.hass, host, "/query/apps", "get")
+        if status != 200:
+            return None
+        apps = dict(parse_apps(data.decode("utf-8", "replace")))
+        return (app_id in apps and is_app_name(apps[app_id])) if apps else None
 
     async def _ecp(self, host, path):
         status, _ = await ecp(self.hass, host, path)

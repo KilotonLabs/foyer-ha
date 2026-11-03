@@ -20,6 +20,7 @@ from custom_components.foyer.core import digest
 ENTITY = "media_player.living_room"
 CODE = "00123456"
 ECP = "http://127.0.0.1:8060"
+INSTALLED = '<apps><app id="dev" type="appl" version="1.0.1">Foyer</app></apps>'
 SETTINGS = {"title": "Maple Street", "areas": ["living_room"], "entities": ["climate.hall", "lock.front", "light.kitchen"],
             "exclude": [], "cameras": ["camera.door"], "favorites": ["light.floor"], "scenes": ["scene.movie"],
             "attention_when_on": [], "weather": "", "allow_control": True, "allow_guarded": False,
@@ -229,6 +230,7 @@ NETFLIX = '<active-app><app id="12" type="appl" version="5.1">Netflix</app></act
 
 
 async def test_show_camera_takes_over_and_returns_to_the_app(hass, tv, aioclient_mock):
+    aioclient_mock.get(f"{ECP}/query/apps", text=INSTALLED)
     aioclient_mock.get(ACTIVE, text=NETFLIX)
     aioclient_mock.post(f"{ECP}/launch/dev", status=200)
     aioclient_mock.post(f"{ECP}/launch/12", status=200)
@@ -252,6 +254,7 @@ async def test_show_camera_takes_over_and_returns_to_the_app(hass, tv, aioclient
 
 
 async def test_show_camera_rules(hass, tv, aioclient_mock):
+    aioclient_mock.get(f"{ECP}/query/apps", text=INSTALLED)
     aioclient_mock.post(f"{ECP}/input", status=200)
     aioclient_mock.post(f"{ECP}/launch/dev", status=200)
     await tv(player="idle")
@@ -267,6 +270,7 @@ async def test_show_camera_rules(hass, tv, aioclient_mock):
 
 
 async def test_foyer_in_front_is_not_remembered(hass, tv, aioclient_mock):
+    aioclient_mock.get(f"{ECP}/query/apps", text=INSTALLED)
     aioclient_mock.get(ACTIVE, text='<active-app><app id="dev" type="appl">Foyer</app></active-app>')
     aioclient_mock.post(f"{ECP}/input", status=200)
     aioclient_mock.post(f"{ECP}/launch/dev", status=200)

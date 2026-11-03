@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- A cast to a closed app opens Foyer only when Foyer is still the app installed under the paired id. If another app took its place (a side-loaded Foyer replaced in the developer slot), nothing is opened and `tv_wake` shows `not_installed`; pair the TV again.
+
 ## 1.1.0
 
 - Foyer Renderer installs as a Home Assistant app (Settings > Apps > App store > Repositories, add this repository). It makes its own secret when none is set.

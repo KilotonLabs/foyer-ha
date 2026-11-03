@@ -36,7 +36,7 @@ Then pair a TV:
 
 Settings per TV: home name, areas (every supported entity in them, minus hidden, disabled and diagnostic ones), extra entities, entities to hide, cameras, favorites, scenes and scripts, flagged helpers, weather, and two switches: allow control (default on) and allow unlocking and garage doors or gates (default off). Profiles from 0.4 are migrated: their checks become extra entities and favorites, their scripts become scene buttons, and control is allowed with guarded actions off.
 
-Each entry is one TV. A successful replacement pairing revokes the prior token. Revoking a TV in Configure also forgets its address, so nothing can open the app on it until it pairs again. To wake a closed app, the Roku needs **Settings > System > Advanced system settings > Control by mobile apps** set to **Enabled** (on older Roku OS: **Network access** set to **Default**); the media player's `tv_wake` attribute shows `blocked` otherwise.
+Each entry is one TV. A successful replacement pairing revokes the prior token. Revoking a TV in Configure also forgets its address, so nothing can open the app on it until it pairs again. To wake a closed app, the Roku needs **Settings > System > Advanced system settings > Control by mobile apps** set to **Enabled** (on older Roku OS: **Network access** set to **Default**); the media player's `tv_wake` attribute shows `blocked` otherwise, and `not_installed` when Foyer is no longer the app installed under the id it paired with.
 
 ## Dashboard renderer
 

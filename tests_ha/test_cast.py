@@ -192,9 +192,12 @@ async def test_hls_camera_plays_as_video(hass, tv):
 
 
 LAUNCH = "http://127.0.0.1:8060/launch/dev?contentId=cast&mediaType=special"
+APPS = "http://127.0.0.1:8060/query/apps"
+FOYER_APPS = '<apps><app id="12" type="appl" version="4.1.0">Netflix</app><app id="dev" type="appl" version="1.0.1">Foyer</app></apps>'
 
 
 async def test_closed_app_is_launched_and_address_survives_restart(hass, tv, setup, aioclient_mock):
+    aioclient_mock.get(APPS, text=FOYER_APPS)
     aioclient_mock.post(LAUNCH, status=200)
     await tv(player="idle")
     assert setup.data["tv_host"] == "127.0.0.1" and setup.data["tv_app"] == "dev"
@@ -203,22 +206,57 @@ async def test_closed_app_is_launched_and_address_survives_restart(hass, tv, set
     await hass.services.async_call(MP, "play_media", {"entity_id": ENTITY, "media_content_type": "video/mp4",
                                                       "media_content_id": CLIP}, blocking=True)
     await hass.async_block_till_done()
-    assert [str(call[1]) for call in aioclient_mock.mock_calls] == [LAUNCH]
+    assert [str(call[1]) for call in aioclient_mock.mock_calls] == [APPS, LAUNCH]
     assert await hass.config_entries.async_reload(setup.entry_id)
     link = hass.data["foyer"].link(setup.entry_id)
     assert (link.remote, link.app_id) == ("127.0.0.1", "dev")
 
 
 async def test_unanswered_input_event_falls_back_to_launch(hass, tv, aioclient_mock):
+    aioclient_mock.get(APPS, text=FOYER_APPS)
     aioclient_mock.post(LAUNCH, status=200)
     await tv(player="idle")
     with patch("custom_components.foyer.api.WAKE_GRACE", 0):
         await hass.services.async_call(MP, "play_media", {"entity_id": ENTITY, "media_content_type": "video/mp4",
                                                           "media_content_id": CLIP}, blocking=True)
         await hass.async_block_till_done()
-    assert [str(call[1]) for call in aioclient_mock.mock_calls] == [WAKE, LAUNCH]
+    assert [str(call[1]) for call in aioclient_mock.mock_calls] == [WAKE, APPS, LAUNCH]
 
 
+
+
+async def _cast_to_closed_app(hass, tv):
+    await tv(player="idle")
+    hass.data["foyer"].link(next(iter(hass.data["foyer"].links))).last_seen -= 30  # The TV app was closed.
+    await hass.services.async_call(MP, "play_media", {"entity_id": ENTITY, "media_content_type": "video/mp4",
+                                                      "media_content_id": CLIP}, blocking=True)
+    await hass.async_block_till_done()
+
+
+async def test_replaced_dev_slot_is_never_launched(hass, tv, aioclient_mock):
+    # 2026-11-03, household TV: the paired side-loaded Foyer had been replaced in the dev slot by another app.
+    aioclient_mock.get(APPS, text='<apps><app id="dev" type="appl" version="1.0.47">StreamPi</app></apps>')
+    aioclient_mock.post(LAUNCH, status=200)
+    await _cast_to_closed_app(hass, tv)
+    assert [str(call[1]) for call in aioclient_mock.mock_calls] == [APPS]
+    assert hass.states.get(ENTITY).attributes["tv_wake"] == "not_installed"
+
+
+async def test_uninstalled_app_is_never_launched(hass, tv, aioclient_mock):
+    aioclient_mock.get(APPS, text='<apps><app id="12" type="appl" version="4.1.0">Netflix</app></apps>')
+    aioclient_mock.post(LAUNCH, status=200)
+    await _cast_to_closed_app(hass, tv)
+    assert [str(call[1]) for call in aioclient_mock.mock_calls] == [APPS]
+    assert hass.states.get(ENTITY).attributes["tv_wake"] == "not_installed"
+
+
+async def test_unreadable_app_list_still_launches(hass, tv, aioclient_mock):
+    # A TV that refuses the app list must still open Foyer, as before this check existed.
+    aioclient_mock.get(APPS, status=403)
+    aioclient_mock.post(LAUNCH, status=200)
+    await _cast_to_closed_app(hass, tv)
+    assert [str(call[1]) for call in aioclient_mock.mock_calls] == [APPS, LAUNCH]
+    assert hass.states.get(ENTITY).attributes["tv_wake"] == "ok"
 
 async def test_large_frame_arrives_complete(hass, tv, setup, aioclient_mock):
     big = bytes(range(256)) * 2400  # 600 KB, many network chunks.
@@ -336,6 +374,7 @@ async def test_stop_pause_and_play_never_open_a_closed_app(hass, tv, setup, aioc
     link = hass.data["foyer"].link(setup.entry_id)
     link.last_seen -= 30  # The TV app was closed.
     aioclient_mock.clear_requests()
+    aioclient_mock.get(APPS, text=FOYER_APPS)
     aioclient_mock.post(LAUNCH, status=200)
     for service in ("media_stop", "media_pause", "media_play", "media_play_pause"):
         await hass.services.async_call(MP, service, {"entity_id": ENTITY}, blocking=True)
