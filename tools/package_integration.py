@@ -10,7 +10,8 @@ dist.mkdir(exist_ok=True)
 source = root / "custom_components" / "foyer"
 with zipfile.ZipFile(dist / "foyer-integration.zip", "w", zipfile.ZIP_DEFLATED) as archive:
     for path in sorted(source.rglob("*")):
-        if path.is_file() and path.suffix in {".py", ".json", ".yaml"} and "__pycache__" not in path.parts:
+        brand = path.parent.name == "brand" and path.suffix == ".png"  # icons HA serves from brand/
+        if path.is_file() and (path.suffix in {".py", ".json", ".yaml"} or brand) and "__pycache__" not in path.parts:
             archive.write(path, path.relative_to(root).as_posix())
     archive.write(root / "LICENSE", "custom_components/foyer/LICENSE")  # GPL: the license travels with every copy
 checksums = {}

@@ -14,7 +14,7 @@ body:
     attributes:
       label: Integration version
       description: HACS > Foyer, or Settings > Devices & services > Foyer.
-      placeholder: "1.1.1"
+      placeholder: "1.1.2"
     validations:
       required: true
   - type: input

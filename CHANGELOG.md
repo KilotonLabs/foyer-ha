@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.2
+
+- Foyer shows its own icon on the Devices & services page instead of the grey "icon not available" box.
+
 ## 1.1.1
 
 - A cast to a closed app opens Foyer only when Foyer is still the app installed under the paired id. If another app took its place (a side-loaded Foyer replaced in the developer slot), nothing is opened and `tv_wake` shows `not_installed`; pair the TV again.

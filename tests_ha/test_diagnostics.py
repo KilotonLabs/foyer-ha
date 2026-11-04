@@ -30,7 +30,7 @@ async def test_diagnostics_hold_no_secrets_addresses_or_names(hass, hass_client_
     found = await async_get_config_entry_diagnostics(hass, entry)
     text = json.dumps(found)  # strict: fails on sets, frozensets or any other non-JSON value
 
-    assert found["foyer"] == "1.1.1" and found["home_assistant"]
+    assert found["foyer"] == "1.1.2" and found["home_assistant"]
     assert found["entry"]["paired"] is True and found["entry"]["version"] == 2
     assert found["entry"]["settings"]["entities"] == 1 and found["entry"]["settings"]["renderer"] is True
     assert found["tv"]["online"] is True and found["tv"]["caps"] == {"video": ["h264", "hevc"], "audio": ["aac", "ac3"], "uhd": True}
